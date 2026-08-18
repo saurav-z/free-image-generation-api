@@ -1,174 +1,769 @@
 <!DOCTYPE html>
-
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Free AI Image Generator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cloudflare AI Image Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #090d16;
+      --bg-surface: #0f172a;
+      --bg-surface-elevated: #1e293b;
+      --bg-glass-card: rgba(30, 41, 59, 0.65);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --primary: #f97316;
+      --primary-hover: #ea580c;
+      --primary-glow: rgba(249, 115, 22, 0.35);
+      --secondary: #6366f1;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --shadow-md: 0 8px 24px rgba(0,0,0,0.45);
+      --shadow-lg: 0 20px 40px rgba(0,0,0,0.6);
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
 
-<style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,Arial}
-body{
-background:#0f172a;
-color:#fff;
-display:flex;
-flex-direction:column;
-height:100vh;
-}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-header{
-padding:14px;
-text-align:center;
-font-weight:600;
-background:#111827;
-border-bottom:1px solid #1f2937;
-}
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(249, 115, 22, 0.14), transparent 40%),
+        radial-gradient(circle at 85% 20%, rgba(99, 102, 241, 0.12), transparent 45%),
+        radial-gradient(circle at 50% 80%, rgba(6, 182, 212, 0.08), transparent 50%);
+      background-attachment: fixed;
+    }
 
-#gallery{
-flex:1;
-overflow-y:auto;
-padding:20px;
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-gap:16px;
-}
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
 
-.card{
-background:#111827;
-border-radius:10px;
-overflow:hidden;
-border:1px solid #1f2937;
-}
+    header {
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(9, 13, 22, 0.85);
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
 
-.card img{
-width:100%;
-display:block;
-}
+    .header-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
 
-.card p{
-font-size:13px;
-padding:8px;
-opacity:.8;
-}
+    .logo-badge { display: flex; align-items: center; gap: 14px; }
+    .logo-icon {
+      width: 44px; height: 44px; border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      display: flex; align-items: center; justify-content: center;
+      color: white; box-shadow: 0 0 20px var(--primary-glow);
+    }
 
-.card a{
-display:block;
-padding:6px 10px;
-font-size:12px;
-text-align:center;
-background:#1f2937;
-color:#fff;
-text-decoration:none;
-}
+    .logo-text h1 {
+      font-size: 1.25rem; font-weight: 800;
+      background: linear-gradient(to right, #fff, #cbd5e1);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .logo-text p { font-size: 0.75rem; color: var(--text-muted); }
 
-#controls{
-padding:12px;
-background:#111827;
-border-top:1px solid #1f2937;
-display:flex;
-flex-wrap:wrap;
-gap:8px;
-}
+    .header-actions { display: flex; align-items: center; gap: 12px; }
 
-input,button{
-padding:10px;
-border:none;
-border-radius:6px;
-}
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px;
+      border-radius: 9999px; background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25); color: var(--accent-emerald);
+      font-size: 0.8rem; font-weight: 600;
+    }
+    .status-pill.error { background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.25); color: var(--accent-rose); }
+    .status-pill.busy { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.25); color: var(--accent-amber); }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
 
-#prompt{
-flex:1;
-min-width:160px;
-}
+    main {
+      max-width: 1440px; width: 100%; margin: 0 auto; padding: 24px; flex: 1;
+      display: grid; grid-template-columns: 460px 1fr; gap: 24px;
+    }
 
-#apikey{
-width:140px;
-}
+    @media (max-width: 1080px) { main { grid-template-columns: 1fr; } }
 
-button{
-background:#6366f1;
-color:white;
-cursor:pointer;
-}
+    .glass-card {
+      background: var(--bg-glass-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); backdrop-filter: blur(14px); box-shadow: var(--shadow-md);
+    }
 
-button:hover{
-background:#4f46e5;
-}
+    .card-header {
+      padding: 18px 22px; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(15, 23, 42, 0.4);
+    }
 
-.loader{
-grid-column:1/-1;
-text-align:center;
-opacity:.7;
-}
-</style>
+    .card-title { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 10px; color: #fff; }
+    .card-body { padding: 22px; display: flex; flex-direction: column; gap: 20px; }
 
+    .cf-badge-banner {
+      display: flex; align-items: center; justify-content: space-between; padding: 10px 14px;
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(99, 102, 241, 0.08));
+      border: 1px solid rgba(249, 115, 22, 0.25); border-radius: var(--radius-md); font-size: 0.82rem;
+    }
+    .cf-badge-banner span { display: flex; align-items: center; gap: 8px; font-weight: 600; color: #fed7aa; }
+
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-label { font-size: 0.825rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; }
+    .form-label span.req { color: var(--primary); margin-left: 2px; }
+
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+    .input-icon { position: absolute; left: 14px; color: var(--text-dim); pointer-events: none; }
+    .input-action {
+      position: absolute; right: 12px; background: transparent; border: none;
+      color: var(--text-muted); cursor: pointer; padding: 4px; display: flex;
+    }
+
+    input[type="text"], input[type="password"], textarea {
+      width: 100%; background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); padding: 11px 14px; color: var(--text-main);
+      font-family: inherit; font-size: 0.88rem; outline: none; transition: all 0.2s;
+    }
+    .has-left-icon input { padding-left: 42px; }
+    .has-right-btn input { padding-right: 42px; }
+
+    input:focus, textarea:focus {
+      border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
+
+    .tag-cloud { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .preset-tag {
+      background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-color);
+      color: var(--text-muted); padding: 4px 10px; border-radius: 9999px; font-size: 0.725rem;
+      font-weight: 500; cursor: pointer; transition: all 0.15s;
+    }
+    .preset-tag:hover { background: var(--primary-glow); color: #fff; border-color: var(--primary); transform: translateY(-1px); }
+
+    .aspect-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .aspect-option {
+      background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm); padding: 8px 4px; display: flex; flex-direction: column;
+      align-items: center; gap: 5px; cursor: pointer; transition: all 0.2s;
+    }
+    .aspect-option:hover { border-color: rgba(255, 255, 255, 0.2); }
+    .aspect-option.active { border-color: var(--primary); background: rgba(249, 115, 22, 0.15); box-shadow: 0 0 12px var(--primary-glow); }
+    .aspect-box { border: 1.5px solid var(--text-muted); border-radius: 2px; }
+    .aspect-option.active .aspect-box { border-color: var(--primary); }
+    .aspect-label { font-size: 0.72rem; font-weight: 600; color: var(--text-muted); }
+    .aspect-option.active .aspect-label { color: #fff; }
+
+    .btn-generate {
+      width: 100%; background: linear-gradient(135deg, #f97316 0%, #fb923c 50%, #ea580c 100%);
+      background-size: 200% auto; color: #fff; border: none; padding: 14px 24px;
+      border-radius: var(--radius-md); font-size: 1rem; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      box-shadow: 0 4px 20px var(--primary-glow); transition: all 0.3s;
+    }
+    .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--primary-glow); }
+    .btn-generate:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-color);
+      color: var(--text-main); padding: 8px 14px; border-radius: var(--radius-sm);
+      font-size: 0.8rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.12); }
+
+    .cors-alert-box {
+      padding: 12px 14px; border-radius: var(--radius-sm);
+      background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25);
+      font-size: 0.78rem; color: #fed7aa; line-height: 1.5;
+    }
+
+    .preview-section { display: flex; flex-direction: column; gap: 24px; }
+    .preview-stage {
+      min-height: 480px; border-radius: var(--radius-lg); background: var(--bg-glass-card);
+      border: 1px solid var(--border-color); display: flex; flex-direction: column;
+      position: relative; overflow: hidden; backdrop-filter: blur(14px);
+    }
+
+    .stage-empty {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; padding: 40px; text-align: center; color: var(--text-dim);
+    }
+    .stage-empty-icon {
+      width: 80px; height: 80px; border-radius: 50%; background: rgba(255, 255, 255, 0.03);
+      border: 1px dashed rgba(255, 255, 255, 0.15); display: flex; align-items: center; justify-content: center;
+    }
+
+    .stage-loading { flex: 1; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 40px; }
+    .spinner-ring {
+      width: 64px; height: 64px; border: 4px solid rgba(249, 115, 22, 0.2);
+      border-top-color: var(--primary); border-right-color: #fb923c; border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-timer {
+      font-family: var(--font-mono); font-size: 1.1rem; font-weight: 600; color: var(--primary);
+      background: rgba(249, 115, 22, 0.1); padding: 4px 12px; border-radius: 9999px; border: 1px solid rgba(249, 115, 22, 0.3);
+    }
+
+    .stage-result { flex: 1; display: none; flex-direction: column; position: relative; }
+    .main-image-wrapper {
+      flex: 1; display: flex; align-items: center; justify-content: center; background: #000;
+      position: relative; overflow: hidden; min-height: 420px;
+    }
+    .main-image-wrapper img { max-width: 100%; max-height: 580px; object-fit: contain; box-shadow: var(--shadow-lg); }
+
+    .image-overlay-actions { position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; z-index: 10; }
+    .overlay-btn {
+      background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; padding: 8px 12px;
+      border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+    }
+    .overlay-btn:hover { background: rgba(249, 115, 22, 0.85); border-color: var(--primary); }
+
+    .image-meta-bar {
+      padding: 16px 20px; background: rgba(15, 23, 42, 0.9); border-top: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    .meta-tags { display: flex; align-items: center; gap: 12px; font-size: 0.8rem; color: var(--text-muted); }
+
+    .log-panel { border-radius: var(--radius-md); background: #070a11; border: 1px solid var(--border-color); overflow: hidden; font-family: var(--font-mono); font-size: 0.78rem; }
+    .log-header { padding: 10px 16px; background: rgba(255, 255, 255, 0.03); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; cursor: pointer; color: var(--text-muted); }
+    .log-content { padding: 12px 16px; max-height: 160px; overflow-y: auto; color: #94a3b8; display: flex; flex-direction: column; gap: 4px; }
+    .log-line { display: flex; gap: 8px; }
+    .log-time { color: #475569; user-select: none; }
+    .log-info { color: #38bdf8; }
+    .log-success { color: #34d399; }
+    .log-warn { color: #fbbf24; }
+    .log-error { color: #f87171; }
+
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+    .gallery-item { aspect-ratio: 1/1; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-color); background: #000; cursor: pointer; transition: all 0.2s; }
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+    .gallery-item:hover { border-color: var(--primary); box-shadow: 0 0 12px var(--primary-glow); }
+
+    .lightbox-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.88); backdrop-filter: blur(12px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 24px; }
+    .lightbox-modal.active { display: flex; }
+    .lightbox-img { max-width: 90vw; max-height: 85vh; border-radius: var(--radius-md); }
+    .lightbox-close { position: absolute; top: 24px; right: 24px; background: rgba(255,255,255,0.1); border: none; color: white; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; font-size: 1.4rem; }
+
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 10px; }
+    .toast { background: var(--bg-surface-elevated); border: 1px solid var(--border-color); padding: 12px 18px; border-radius: var(--radius-md); color: #fff; font-size: 0.85rem; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-md); }
+  </style>
 </head>
-
 <body>
+  <header>
+    <div class="header-container">
+      <div class="logo-badge">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+        </div>
+        <div class="logo-text">
+          <h1>Cloudflare AI Image Studio</h1>
+          <p>Cloudflare Workers Image Generator Direct Interface</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="status-pill" id="statusPill">
+          <span class="status-dot"></span>
+          <span id="statusText">Ready</span>
+        </div>
+        <button class="btn-secondary" id="btnTestApi" title="Test API Connection">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Health Check
+        </button>
+      </div>
+    </div>
+  </header>
 
-<header>✨ Free AI Image Generator</header>
+  <main>
+    <div class="glass-card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          API Parameters
+        </div>
+        <button class="btn-secondary" id="btnResetDefaults" style="padding: 4px 8px; font-size: 0.72rem;">Reset</button>
+      </div>
 
-<div id="gallery"></div>
+      <div class="card-body">
+        <div class="cf-badge-banner">
+          <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg> Cloudflare Worker Direct API</span>
+          <span style="font-size:0.75rem; color:var(--text-muted);">POST { prompt }</span>
+        </div>
 
-<div id="controls">
-<input id="apikey" placeholder="API Key">
-<input id="prompt" placeholder="Describe the image you want...">
-<button onclick="generate()">Generate</button>
-</div>
+        <div class="form-group">
+          <label class="form-label" for="apiUrl">
+            <span>API URL (IMAGE_API_URL) <span class="req">*</span></span>
+          </label>
+          <div class="input-wrapper has-left-icon">
+            <span class="input-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+            <input type="text" id="apiUrl" value="https://image-api.sadixyildirim.workers.dev" spellcheck="false" />
+          </div>
+        </div>
 
-<script>
+        <div class="form-group">
+          <label class="form-label" for="apiKey">
+            <span>API Key (IMAGE_API_KEY) <span class="req">*</span></span>
+          </label>
+          <div class="input-wrapper has-left-icon has-right-btn">
+            <span class="input-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+            <input type="password" id="apiKey" value="BgmjmB9xWwnb2EhODhbZAm" spellcheck="false" />
+            <button type="button" class="input-action" id="btnToggleKey" title="Toggle Password Visibility">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="iconEye"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
 
-const API_URL="YOUR_WORKER_URL";
+        <div class="form-group">
+          <div class="form-label">
+            <span>Prompt (Image Description) <span class="req">*</span></span>
+            <span id="charCount" style="font-family:var(--font-mono); font-size:0.72rem; color:var(--text-dim)">0 characters</span>
+          </div>
+          <textarea id="promptText" rows="4" placeholder="Describe the image you want to generate in detail...&#10;e.g., A futuristic cyberpunk city at night, neon reflections on wet asphalt, cinematic lighting, 8k resolution, photorealistic"></textarea>
+          
+          <div class="tag-cloud">
+            <span class="preset-tag" data-tag="photorealistic, 8k resolution, highly detailed, dramatic lighting, shot on 35mm lens">📸 Photorealistic</span>
+            <span class="preset-tag" data-tag="cinematic composition, movie still, volumetric lighting, epic scale">🎬 Cinematic</span>
+            <span class="preset-tag" data-tag="cyberpunk style, neon lights, futuristic cityscape, rainy night">🌃 Cyberpunk</span>
+            <span class="preset-tag" data-tag="anime aesthetic, studio ghibli inspired, vibrant colors, lush background">🎨 Anime</span>
+            <span class="preset-tag" data-tag="3d render, octane render, unreal engine 5, ray tracing, cute isometric">🧊 3D Render</span>
+            <span class="preset-tag" data-tag="oil painting style, rich textures, expressive brush strokes, masterpiece">🖼️ Oil Painting</span>
+          </div>
+        </div>
 
-async function generate(){
-const prompt=document.getElementById("prompt").value.trim();
-const key=document.getElementById("apikey").value.trim();
-const gallery=document.getElementById("gallery");
+        <div class="form-group">
+          <label class="form-label"><span>Aspect Ratio</span></label>
+          <div class="aspect-grid">
+            <div class="aspect-option active" data-ratio="1:1">
+              <div class="aspect-box" style="width: 18px; height: 18px;"></div>
+              <span class="aspect-label">1:1</span>
+            </div>
+            <div class="aspect-option" data-ratio="16:9">
+              <div class="aspect-box" style="width: 24px; height: 14px;"></div>
+              <span class="aspect-label">16:9</span>
+            </div>
+            <div class="aspect-option" data-ratio="9:16">
+              <div class="aspect-box" style="width: 14px; height: 24px;"></div>
+              <span class="aspect-label">9:16</span>
+            </div>
+            <div class="aspect-option" data-ratio="4:3">
+              <div class="aspect-box" style="width: 20px; height: 15px;"></div>
+              <span class="aspect-label">4:3</span>
+            </div>
+          </div>
+        </div>
 
-if(!prompt||!key)return alert("Enter prompt and API key");
+        <button class="btn-generate" id="btnGenerate">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+          </svg>
+          <span id="btnGenerateText">Generate Image</span>
+        </button>
 
-const loader=document.createElement("div");
-loader.className="loader";
-loader.innerText="Generating image...";
-gallery.prepend(loader);
+        <div class="cors-alert-box">
+          ℹ️ <strong>CORS Note:</strong> When opened directly from the browser (file:///), your Cloudflare Worker must have OPTIONS preflight and CORS headers enabled.
+        </div>
+      </div>
+    </div>
 
-try{
+    <div class="preview-section">
+      <div class="preview-stage">
+        <div class="stage-empty" id="stageEmpty">
+          <div class="stage-empty-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+            </svg>
+          </div>
+          <div>
+            <h3 style="font-size: 1.1rem; color: #fff; margin-bottom: 4px;">No Image Generated Yet</h3>
+            <p style="font-size: 0.85rem; max-width: 320px;">Enter your prompt and click "Generate Image" to create artwork.</p>
+          </div>
+        </div>
 
-const res=await fetch(API_URL,{
-method:"POST",
-headers:{
-"Content-Type":"application/json",
-"Authorization":"Bearer "+key
-},
-body:JSON.stringify({prompt})
-});
+        <div class="stage-loading" id="stageLoading">
+          <div class="spinner-ring"></div>
+          <div>
+            <h3 style="font-size: 1.15rem; color: #fff; margin-bottom: 6px;">AI is Generating Image...</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;" id="loadingSubtitle">Request sent to Cloudflare Worker API</p>
+            <div class="loading-timer" id="loadingTimer">0.0 s</div>
+          </div>
+        </div>
 
-if(!res.ok) throw new Error("API Error");
+        <div class="stage-result" id="stageResult">
+          <div class="main-image-wrapper">
+            <img id="mainImage" src="" alt="Generated AI Image" />
+            <div class="image-overlay-actions">
+              <button class="overlay-btn" id="btnZoom" title="Fullscreen"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/></svg> Fullscreen</button>
+              <button class="overlay-btn" id="btnDownload" title="Download Image"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> Download (.JPG)</button>
+              <button class="overlay-btn" id="btnCopyBase64" title="Copy Base64"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Base64</button>
+            </div>
+          </div>
+          <div class="image-meta-bar">
+            <div class="meta-tags">
+              <div class="meta-tag">⏱️ Duration: <strong id="metaDuration">-</strong></div>
+              <div class="meta-tag">📐 Resolution: <strong id="metaResolution">-</strong></div>
+              <div class="meta-tag">📦 Size: <strong id="metaSize">-</strong></div>
+              <div class="meta-tag">🏷️ Format: <strong>image/jpeg</strong></div>
+            </div>
+            <button class="btn-secondary" id="btnCopyPrompt" style="padding: 4px 10px; font-size: 0.75rem;">Copy Prompt</button>
+          </div>
+        </div>
+      </div>
 
-const blob=await res.blob();
-const url=URL.createObjectURL(blob);
+      <div class="log-panel">
+        <div class="log-header" id="logHeader">
+          <span style="display:flex; align-items:center; gap:8px; font-weight:600;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
+            Activity Logs (Console & Events)
+          </span>
+          <span id="logToggleIcon">▼</span>
+        </div>
+        <div class="log-content" id="logContent">
+          <div class="log-line">
+            <span class="log-time">[00:00:00]</span>
+            <span class="log-info">Cloudflare Direct Image Generator is ready.</span>
+          </div>
+        </div>
+      </div>
 
-const card=document.createElement("div");
-card.className="card";
+      <div class="glass-card" id="historySection" style="display:none; flex-direction:column; gap:12px;">
+        <div class="card-header">
+          <div class="card-title">Session Gallery (<span id="historyCount">0</span>)</div>
+          <button class="btn-secondary" id="btnClearHistory" style="padding: 4px 8px; font-size: 0.72rem;">Clear</button>
+        </div>
+        <div style="padding: 16px;">
+          <div class="gallery-grid" id="galleryGrid"></div>
+        </div>
+      </div>
+    </div>
+  </main>
 
-card.innerHTML=`
-<img src="${url}">
-<p>${prompt}</p>
-<a href="${url}" download="ai-image.jpg">Download</a>
-`;
+  <div class="lightbox-modal" id="lightboxModal">
+    <button class="lightbox-close" id="lightboxClose">&times;</button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="Fullscreen View" />
+  </div>
 
-gallery.prepend(card);
+  <div class="toast-container" id="toastContainer"></div>
 
-}catch(err){
-alert(err.message);
-}
+  <script>
+    const state = {
+      aspectRatio: '1:1',
+      currentImageUrl: null,
+      currentBase64: null,
+      currentPrompt: '',
+      history: [],
+      timerInterval: null,
+      startTime: 0
+    };
 
-loader.remove();
-document.getElementById("prompt").value="";
+    const elements = {
+      apiUrl: document.getElementById('apiUrl'),
+      apiKey: document.getElementById('apiKey'),
+      btnToggleKey: document.getElementById('btnToggleKey'),
+      promptText: document.getElementById('promptText'),
+      charCount: document.getElementById('charCount'),
+      presetTags: document.querySelectorAll('.preset-tag'),
+      aspectOptions: document.querySelectorAll('.aspect-option'),
+      btnGenerate: document.getElementById('btnGenerate'),
+      btnGenerateText: document.getElementById('btnGenerateText'),
+      btnTestApi: document.getElementById('btnTestApi'),
+      btnResetDefaults: document.getElementById('btnResetDefaults'),
+      statusPill: document.getElementById('statusPill'),
+      statusText: document.getElementById('statusText'),
+      stageEmpty: document.getElementById('stageEmpty'),
+      stageLoading: document.getElementById('stageLoading'),
+      stageResult: document.getElementById('stageResult'),
+      loadingSubtitle: document.getElementById('loadingSubtitle'),
+      loadingTimer: document.getElementById('loadingTimer'),
+      mainImage: document.getElementById('mainImage'),
+      btnZoom: document.getElementById('btnZoom'),
+      btnDownload: document.getElementById('btnDownload'),
+      btnCopyBase64: document.getElementById('btnCopyBase64'),
+      btnCopyPrompt: document.getElementById('btnCopyPrompt'),
+      metaDuration: document.getElementById('metaDuration'),
+      metaResolution: document.getElementById('metaResolution'),
+      metaSize: document.getElementById('metaSize'),
+      logHeader: document.getElementById('logHeader'),
+      logContent: document.getElementById('logContent'),
+      historySection: document.getElementById('historySection'),
+      historyCount: document.getElementById('historyCount'),
+      galleryGrid: document.getElementById('galleryGrid'),
+      btnClearHistory: document.getElementById('btnClearHistory'),
+      lightboxModal: document.getElementById('lightboxModal'),
+      lightboxImg: document.getElementById('lightboxImg'),
+      lightboxClose: document.getElementById('lightboxClose'),
+      toastContainer: document.getElementById('toastContainer')
+    };
 
-}
+    function log(message, type = 'info') {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      let typeClass = 'log-info';
+      if (type === 'success') typeClass = 'log-success';
+      if (type === 'warn') typeClass = 'log-warn';
+      if (type === 'error') typeClass = 'log-error';
+      line.innerHTML = `<span class="log-time">[${timeStr}]</span><span class="${typeClass}">${escapeHtml(message)}</span>`;
+      elements.logContent.appendChild(line);
+      elements.logContent.scrollTop = elements.logContent.scrollHeight;
+    }
 
-</script>
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
 
+    function showToast(msg, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      let icon = type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️';
+      toast.innerHTML = `<span>${icon}</span> <span>${escapeHtml(msg)}</span>`;
+      elements.toastContainer.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    function setStatus(text, stateType = 'ready') {
+      elements.statusText.textContent = text;
+      elements.statusPill.className = 'status-pill';
+      if (stateType === 'busy') elements.statusPill.classList.add('busy');
+      if (stateType === 'error') elements.statusPill.classList.add('error');
+    }
+
+    elements.btnToggleKey.addEventListener('click', () => {
+      elements.apiKey.type = elements.apiKey.type === 'password' ? 'text' : 'password';
+    });
+
+    elements.promptText.addEventListener('input', () => {
+      elements.charCount.textContent = `${elements.promptText.value.length} characters`;
+    });
+
+    elements.presetTags.forEach(tag => {
+      tag.addEventListener('click', () => {
+        const appendText = tag.dataset.tag;
+        let current = elements.promptText.value.trim();
+        elements.promptText.value = current ? `${current.replace(/,$/, '')}, ${appendText}` : appendText;
+        elements.promptText.dispatchEvent(new Event('input'));
+        elements.promptText.focus();
+      });
+    });
+
+    elements.aspectOptions.forEach(opt => {
+      opt.addEventListener('click', () => {
+        elements.aspectOptions.forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+        state.aspectRatio = opt.dataset.ratio;
+      });
+    });
+
+    // Health check
+    elements.btnTestApi.addEventListener('click', async () => {
+      const url = elements.apiUrl.value.trim();
+      const key = elements.apiKey.value.trim();
+      if (!url) { showToast('Please enter an API URL', 'warn'); return; }
+
+      setStatus('Testing...', 'busy');
+      log(`[Health Check] Sending request...`, 'info');
+
+      try {
+        const res = await fetch(url, { method: 'GET', headers: { 'Authorization': `Bearer ${key}` } });
+        if (res.ok) {
+          setStatus('API Active', 'ready');
+          showToast('API connection is active and healthy!', 'success');
+          log('[Health Check] Connection successful.', 'success');
+        } else {
+          setStatus('Response Received', 'ready');
+          showToast(`API returned HTTP ${res.status}`, 'info');
+          log(`[Health Check] HTTP ${res.status}`, 'info');
+        }
+      } catch (err) {
+        setStatus('CORS / Connection Error', 'error');
+        showToast('Browser CORS error: ' + err.message, 'error');
+        log(`[ERROR] ${err.message} (Browser blocked by CORS. Verify OPTIONS handling in Cloudflare Worker)`, 'error');
+      }
+    });
+
+    // Generate Request
+    elements.btnGenerate.addEventListener('click', async () => {
+      const url = elements.apiUrl.value.trim();
+      const key = elements.apiKey.value.trim();
+      const prompt = elements.promptText.value.trim();
+
+      if (!url || !key) { showToast('API URL and Key are required.', 'warn'); return; }
+      if (!prompt) { showToast('Please enter a prompt.', 'warn'); elements.promptText.focus(); return; }
+
+      setLoading(true);
+      const reqId = Math.random().toString(36).substring(2, 9);
+      log(`[${reqId}] Generation started: "${prompt.substring(0, 50)}..."`, 'info');
+
+      try {
+        log(`[${reqId}] Sending POST request to Cloudflare Worker...`, 'info');
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${key}`
+          },
+          body: JSON.stringify({ prompt: prompt })
+        });
+
+        if (!res.ok) {
+          const errTxt = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errTxt.substring(0, 150)}`);
+        }
+
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const base64 = await blobToBase64(blob);
+        const imageResult = {
+          url: blobUrl,
+          base64: base64,
+          duration: ((performance.now() - state.startTime) / 1000).toFixed(2),
+          sizeBytes: blob.size
+        };
+
+        displayImage(imageResult, prompt);
+      } catch (err) {
+        log(`[${reqId}] ERROR: ${err.message}`, 'error');
+        setStatus('Failed', 'error');
+        showToast('Image generation failed: ' + err.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    function blobToBase64(blob) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    function displayImage(result, prompt) {
+      state.currentImageUrl = result.url;
+      state.currentBase64 = result.base64;
+      state.currentPrompt = prompt;
+
+      elements.mainImage.src = result.url;
+      elements.metaDuration.textContent = `${result.duration} s`;
+      elements.metaSize.textContent = result.sizeBytes ? `${(result.sizeBytes / 1024).toFixed(1)} KB` : '-';
+      
+      elements.mainImage.onload = () => {
+        elements.metaResolution.textContent = `${elements.mainImage.naturalWidth} x ${elements.mainImage.naturalHeight} px`;
+      };
+
+      elements.stageEmpty.style.display = 'none';
+      elements.stageLoading.style.display = 'none';
+      elements.stageResult.style.display = 'flex';
+
+      setStatus('Image Generated', 'ready');
+      showToast('Image generated successfully!', 'success');
+
+      addToHistory({ url: result.url, base64: result.base64, prompt: prompt, time: new Date().toLocaleTimeString(), duration: result.duration });
+    }
+
+    function setLoading(isLoading) {
+      elements.btnGenerate.disabled = isLoading;
+      if (isLoading) {
+        state.startTime = performance.now();
+        elements.stageEmpty.style.display = 'none';
+        elements.stageResult.style.display = 'none';
+        elements.stageLoading.style.display = 'flex';
+        elements.btnGenerateText.textContent = 'Generating...';
+        setStatus('Generating...', 'busy');
+        state.timerInterval = setInterval(() => {
+          elements.loadingTimer.textContent = `${((performance.now() - state.startTime) / 1000).toFixed(1)} s`;
+        }, 100);
+      } else {
+        clearInterval(state.timerInterval);
+        elements.btnGenerateText.textContent = 'Generate Image';
+      }
+    }
+
+    function addToHistory(item) {
+      state.history.unshift(item);
+      elements.historySection.style.display = 'flex';
+      elements.historyCount.textContent = state.history.length;
+      elements.galleryGrid.innerHTML = '';
+      state.history.forEach(h => {
+        const div = document.createElement('div');
+        div.className = 'gallery-item';
+        div.innerHTML = `<img src="${h.url}" />`;
+        div.onclick = () => {
+          elements.mainImage.src = h.url;
+          state.currentImageUrl = h.url;
+          state.currentBase64 = h.base64;
+          elements.promptText.value = h.prompt;
+          elements.stageEmpty.style.display = 'none';
+          elements.stageLoading.style.display = 'none';
+          elements.stageResult.style.display = 'flex';
+        };
+        elements.galleryGrid.appendChild(div);
+      });
+    }
+
+    elements.btnDownload.addEventListener('click', () => {
+      if (!state.currentImageUrl) return;
+      const a = document.createElement('a');
+      a.href = state.currentImageUrl;
+      a.download = `cloudflare-ai-${Date.now()}.jpg`;
+      a.click();
+    });
+
+    elements.btnCopyBase64.addEventListener('click', () => {
+      if (state.currentBase64) {
+        navigator.clipboard.writeText(state.currentBase64).then(() => showToast('Base64 copied to clipboard!', 'success'));
+      }
+    });
+
+    elements.btnCopyPrompt.addEventListener('click', () => {
+      if (state.currentPrompt) {
+        navigator.clipboard.writeText(state.currentPrompt).then(() => showToast('Prompt copied to clipboard!', 'success'));
+      }
+    });
+
+    elements.btnZoom.addEventListener('click', () => {
+      if (!state.currentImageUrl) return;
+      elements.lightboxImg.src = state.currentImageUrl;
+      elements.lightboxModal.classList.add('active');
+    });
+
+    elements.lightboxClose.addEventListener('click', () => elements.lightboxModal.classList.remove('active'));
+    elements.lightboxModal.addEventListener('click', (e) => { if (e.target === elements.lightboxModal) elements.lightboxModal.classList.remove('active'); });
+
+    elements.logHeader.addEventListener('click', () => {
+      const isHidden = elements.logContent.style.display === 'none';
+      elements.logContent.style.display = isHidden ? 'flex' : 'none';
+      document.getElementById('logToggleIcon').textContent = isHidden ? '▼' : '▲';
+    });
+  </script>
 </body>
 </html>

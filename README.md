@@ -1,123 +1,119 @@
-# ✨ Free AI Image Generation API (100,000 Calls/Day) ⚡
+# ✨ Free AI Image Generation API (Cloudflare Workers) ⚡
 
 <div align="center">
 
-![GitHub stars](https://img.shields.io/github/stars/saurav-z/free-image-generation-api?style=social)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-orange.svg)
-![AI](https://img.shields.io/badge/AI-Stable%20Diffusion-purple.svg)
+![AI](https://img.shields.io/badge/AI-Workers%20AI-purple.svg)
+![CORS](https://img.shields.io/badge/CORS-Enabled-green.svg)
 
 **🚀 Deploy your own free AI image generation API in minutes!**
 
 </div>
 
-This project lets you deploy your own **free AI image generation API** using Cloudflare Workers, with up to **100,000 API calls per day**. Generate stunning images from text prompts using powerful models like Stable Diffusion XL! 🎨
+This project allows you to deploy your own **free, high-performance AI image generation API** using Cloudflare Workers, supporting up to **10,000+ AI requests per day** on Cloudflare's free tier. Generate high-resolution images from text prompts using models like **Stable Diffusion XL**, **FLUX.1 Schnell**, and **SDXL Lightning**! 🎨
 
-## ✨ Features
-- 🆓 **100,000 free API calls per day** (Cloudflare Workers AI free tier)
-- ⚡ **Lightning-fast** image generation from text prompts
-- 🛠️ **Easy to deploy** - no coding experience required
-- 🔒 **Secure** with API key authentication
-- 🎯 **Multiple AI models** available
+---
+
+## ✨ Key Features
+- 🆓 **Free Tier Friendly:** Uses Cloudflare Workers AI with generous daily limits.
+- ⚡ **Lightning-Fast:** Generates images in seconds directly on Cloudflare edge.
+- 🌐 **Full CORS Support:** Ready for direct browser integration (`fetch`) with automatic `OPTIONS` preflight handling.
+- 🩺 **Built-in Health Check:** `GET /` endpoint to monitor API uptime.
+- 🎯 **Dynamic Model Selection:** Switch AI models on-the-fly via the request payload.
+- 🎨 **Modern Web UI Included:** Includes `frontend_demo.html` — a dark-mode studio interface.
+- 🔒 **Secure:** Bearer token (`CF_API_KEY`) authentication.
 
 ---
 
 ## 🚀 How It Works
-- 📤 You deploy a Cloudflare Worker using the provided `worker.js` file
-- 🌐 The Worker exposes a simple API endpoint for image generation
-- 🔐 You authenticate using your own API key
-- 🤖 The Worker uses Cloudflare's free AI models to generate images
+1. Deploy the provided [`worker.js`](worker.js) script to Cloudflare Workers.
+2. Bind **Workers AI** to your worker.
+3. Set your secret `CF_API_KEY` in worker environment variables.
+4. Send `POST` requests from cURL, Python, PHP, or open [`frontend_demo.html`](frontend_demo.html) directly in any browser!
 
 ---
 
 ## 📋 Setup Instructions
 
 ### 1. 🌟 Get a Cloudflare Account
-- Sign up at [Cloudflare](https://dash.cloudflare.com/sign-up) if you don't have one
+- Sign up at [Cloudflare](https://dash.cloudflare.com/sign-up) if you don't have an account.
 
 ### 2. ⚡ Create a New Worker
-- Go to the [Cloudflare Workers dashboard](https://dash.cloudflare.com/workers)
-- Click **"Create application"** 🎯
-- Choose **"Create Worker"** 
-- Give it a name like `free-image-generation-api` 📝
-- Click **"Deploy"** to create a Hello World worker 🚀
+- Go to the [Cloudflare Workers Dashboard](https://dash.cloudflare.com/workers).
+- Click **"Create application"** ➡️ **"Create Worker"**.
+- Choose a name (e.g., `image-api`) and click **"Deploy"**.
 
-### 3. 🔧 Replace the Worker Code
-- In the worker editor, replace the default Hello World code with the `worker.js` code from this repo 📄
-- Click **"Save and Deploy"** ✅
+### 3. 🔧 Paste the Worker Code
+- In the Worker editor, click **"Edit code"** and replace all contents with the code from [`worker.js`](worker.js).
+- Click **"Save and Deploy"** ✅.
 
-### 4. 🔑 Set Up Environment Variables
-- In your worker dashboard, go to **"Settings"** > **"Variables"** ⚙️
-- Under **"Environment Variables"**, click **"Add variable"** ➕
-- Name: `API_KEY` 🏷️
-- Value: `your-secret-api-key` (replace with a strong secret key) 🔒
-- Click **"Save and Deploy"** 💾
+### 4. 🔑 Set Up the API Key
+- In your Worker dashboard, go to **"Settings"** ➡️ **"Variables and Secrets"** ⚙️.
+- Under **"Environment Variables"**, click **"Add variable"** ➕:
+  - **Variable name:** `CF_API_KEY`
+  - **Value:** `your-secret-api-key` (choose a strong secret key)
+- Click **"Save and Deploy"** 💾.
 
-### 5. 🤖 Enable Workers AI
-- In the Cloudflare dashboard, go to **"Workers & Pages"** > **"AI"** 🧠
-- Enable Workers AI for your account (free tier is enough) 🆓
+### 5. 🤖 Bind Workers AI
+- In your Worker dashboard, go to **"Settings"** ➡️ **"Bindings"** (or **Variables**).
+- Under **"Service bindings"** / **"Workers AI"**, click **"Add binding"** ➕:
+  - **Type:** `Workers AI`
+  - **Binding name:** `AI`
+- Click **"Save and Deploy"** ✅.
 
-### 6. 🔗 Add AI Binding to Your Worker
-- Go back to your worker's dashboard
-- Click on **"Settings"** > **"Variables"** ⚙️
-- Scroll down to **"Service bindings"** section
-- Click **"Add binding"** ➕
-- Variable name: `AI` 🏷️
-- Service: Select **"Workers AI"** from dropdown 🤖
-- Click **"Save and Deploy"** ✅
+> ⚠️ **Important:** Without the `AI` binding named `AI`, Cloudflare cannot run AI models.
 
-> ⚠️ **Important:** Without this AI binding, your worker won't be able to access Cloudflare's AI models!
-
-### 7. 🌐 Get Your Worker URL
-- Your worker will be available at: `https://<your-worker-name>.<your-subdomain>.workers.dev` 🔗
-- You can find the exact URL in your worker's dashboard 📍
+### 6. 🌐 Get Your Worker URL
+- Your worker endpoint will be: `https://<your-worker-name>.<your-subdomain>.workers.dev`
 
 ---
 
-## 🎯 Usage
+## 🎯 API Usage
 
-### 🖥️ cURL Example
+### 1. Health Check (`GET /`)
 ```bash
-curl -X POST https://<your-worker-name>.<your-subdomain>.workers.dev \
+curl -X GET https://<your-worker-url>
+```
+**Response:**
+```json
+{
+  "status": "active",
+  "message": "Cloudflare AI Image API is running"
+}
+```
+
+### 2. Generate Image (`POST /`)
+```bash
+curl -X POST https://<your-worker-url> \
   -H "Authorization: Bearer your-secret-api-key" \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "A cute robot cooking breakfast"}' \
-  --output image.jpg
-```
-
-### 🌐 JavaScript Example
-```js
-const res = await fetch("https://<your-worker-name>.<your-subdomain>.workers.dev", {
-  method: "POST",
-  headers: {
-    "Authorization": "Bearer your-secret-api-key",
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({ prompt: "A futuristic city in the clouds" }),
-});
-const blob = await res.blob();
-const img = document.createElement("img");
-img.src = URL.createObjectURL(blob);
-img.style.height = "500px";
-document.body.appendChild(img);
+  -d '{
+    "prompt": "A futuristic cyberpunk city at night, neon reflections on wet asphalt, cinematic lighting, 8k resolution",
+    "model": "@cf/stabilityai/stable-diffusion-xl-base-1.0"
+  }' \
+  --output generated_image.jpg
 ```
 
 ---
 
-## 📝 Notes
-- 🆓 **Free Tier:** Cloudflare Workers AI free tier allows 100,000 AI requests per day. See [Cloudflare pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/) for details.
-- 🎨 **Models:** You can change the model in `worker.js` to use other available models (see comments in the file).
-- 🔒 **Security:** Keep your API key secret. Rotate it if needed.
+## 🎨 Supported AI Models
+You can pass any of the following models in the `"model"` field:
+- `@cf/stabilityai/stable-diffusion-xl-base-1.0` *(Default - High quality)*
+- `@cf/blackforestlabs/flux-1-schnell` *(State-of-the-art fast rendering)*
+- `@cf/bytedance/stable-diffusion-xl-lightning` *(Ultra-fast generation)*
+- `@cf/lykon/dreamshaper-8-lcm` *(Artistic / stylized)*
+- `@cf/runwayml/stable-diffusion-v1-5-img2img`
+
+---
+
+## 🖥️ Web Interface Demo
+Simply double-click [`frontend_demo.html`](frontend_demo.html) in your browser:
+- Enter your **API URL** and **API Key**.
+- Type your prompt or select from curated style tags.
+- Click **"Generate Image"** to create, view fullscreen, and download `.jpg` images!
 
 ---
 
 ## 📄 License
-MIT License ⭐
-
----
-
-<div align="center">
-
-**⭐ Star this repo if it helped you! ⭐**
-
-</div>
+MIT License © 2026
