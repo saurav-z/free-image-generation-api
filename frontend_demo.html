@@ -111,62 +111,107 @@ opacity:.7;
 <div id="gallery"></div>
 
 <div id="controls">
-<input id="apikey" placeholder="API Key">
+<input id="apikey" type="password" placeholder="API Key">
 <input id="prompt" placeholder="Describe the image you want...">
-<button onclick="generate()">Generate</button>
+<button id="generateBtn">Generate</button>
 </div>
 
 <script>
 
-const API_URL="YOUR_WORKER_URL";
+// 👉 Replace with your deployed Worker URL, e.g. "https://my-worker.my-name.workers.dev"
+const API_URL = "YOUR_WORKER_URL";
 
-async function generate(){
-const prompt=document.getElementById("prompt").value.trim();
-const key=document.getElementById("apikey").value.trim();
-const gallery=document.getElementById("gallery");
+// Keep memory bounded: only this many images are kept in the gallery.
+const MAX_CARDS = 24;
 
-if(!prompt||!key)return alert("Enter prompt and API key");
+const gallery = document.getElementById("gallery");
+const promptInput = document.getElementById("prompt");
+const keyInput = document.getElementById("apikey");
+const generateBtn = document.getElementById("generateBtn");
 
-const loader=document.createElement("div");
-loader.className="loader";
-loader.innerText="Generating image...";
-gallery.prepend(loader);
+async function generate() {
+    const prompt = promptInput.value.trim();
+    const key = keyInput.value.trim();
 
-try{
+    if (API_URL === "YOUR_WORKER_URL") {
+        return alert("Set API_URL in this file to your Worker URL first.");
+    }
+    if (!prompt || !key) return alert("Enter prompt and API key");
 
-const res=await fetch(API_URL,{
-method:"POST",
-headers:{
-"Content-Type":"application/json",
-"Authorization":"Bearer "+key
-},
-body:JSON.stringify({prompt})
+    generateBtn.disabled = true;
+
+    const loader = document.createElement("div");
+    loader.className = "loader";
+    loader.textContent = "Generating image...";
+    gallery.prepend(loader);
+
+    try {
+        const res = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + key,
+            },
+            body: JSON.stringify({ prompt }),
+        });
+
+        if (!res.ok) {
+            // Try to read the error message the Worker returned.
+            let message = "API Error (" + res.status + ")";
+            try {
+                const data = await res.json();
+                if (data && data.error) message = data.error;
+            } catch { /* body was not JSON */ }
+            throw new Error(message);
+        }
+
+        const blob = await res.blob();
+        addCard(blob, prompt);
+        promptInput.value = "";
+    } catch (err) {
+        alert(err.message);
+    } finally {
+        loader.remove();
+        generateBtn.disabled = false;
+    }
+}
+
+function addCard(blob, prompt) {
+    const objUrl = URL.createObjectURL(blob);
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card._objUrl = objUrl; // remembered so we can free it later
+
+    const img = document.createElement("img");
+    img.src = objUrl;
+    img.alt = prompt;
+
+    const caption = document.createElement("p");
+    caption.textContent = prompt; // textContent avoids HTML injection
+
+    const link = document.createElement("a");
+    link.textContent = "Download";
+    link.href = objUrl;
+    link.download = "ai-image.png";
+
+    card.append(img, caption, link);
+    gallery.prepend(card);
+
+    // Drop old cards and release their object URLs to avoid memory leaks.
+    let cards = gallery.querySelectorAll(".card");
+    while (cards.length > MAX_CARDS) {
+        const oldest = cards[cards.length - 1];
+        if (oldest._objUrl) URL.revokeObjectURL(oldest._objUrl);
+        oldest.remove();
+        cards = gallery.querySelectorAll(".card");
+    }
+}
+
+generateBtn.addEventListener("click", generate);
+promptInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") generate();
 });
-
-if(!res.ok) throw new Error("API Error");
-
-const blob=await res.blob();
-const url=URL.createObjectURL(blob);
-
-const card=document.createElement("div");
-card.className="card";
-
-card.innerHTML=`
-<img src="${url}">
-<p>${prompt}</p>
-<a href="${url}" download="ai-image.jpg">Download</a>
-`;
-
-gallery.prepend(card);
-
-}catch(err){
-alert(err.message);
-}
-
-loader.remove();
-document.getElementById("prompt").value="";
-
-}
 
 </script>
 
