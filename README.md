@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![GitHub stars](https://img.shields.io/github/stars/saurav-z/free-image-generation-api?style=social)
+![GitHub stars](https://img.shields.io/github/stars/shiranj/free-image-generation-api?style=social)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-orange.svg)
 ![AI](https://img.shields.io/badge/AI-Stable%20Diffusion-purple.svg)
@@ -104,6 +104,35 @@ document.body.appendChild(img);
 
 ---
 
+## 📡 API Reference
+
+| | |
+|---|---|
+| **Endpoint** | `POST /` |
+| **Auth header** | `Authorization: Bearer <your-api-key>` (required) |
+| **Body** | JSON — `{ "prompt": "..." }` (plus the optional fields below) |
+| **Success** | `200 OK` — a **binary PNG image** (`Content-Type: image/png`) |
+| **Errors** | JSON — `{ "error": "..." }` |
+
+### ⚠️ Error Responses
+
+| Status | Meaning |
+|--------|---------|
+| `400` | Bad request — missing/empty prompt, prompt too long, invalid JSON, or an invalid optional field |
+| `401` | Unauthorized — missing or wrong API key |
+| `405` | Not allowed — method is not `POST` or path is not `/` |
+| `500` | `Server not configured` (the `API_KEY` variable is not set) or `Failed to generate image` |
+
+---
+
+## 🖼️ Web Demo
+
+A ready-to-use page is included: **`frontend_demo.html`**.
+Open it in a browser, set the `API_URL` constant near the top of its `<script>` to your Worker URL, then enter your API key and a prompt.
+Because the Worker sends CORS headers, the demo works from any origin.
+
+---
+
 ## ⚙️ Optional Request Parameters
 Besides `prompt`, the API accepts these optional fields (validated by the Worker):
 
@@ -129,6 +158,11 @@ Besides `prompt`, the API accepts these optional fields (validated by the Worker
 - ✅ **Validation:** The Worker checks the API key, the request method, and every input before calling the AI model.
 - 🔒 **Security:** Keep your API key secret and rotate it if needed. The Worker refuses to run (`500 Server not configured`) if `API_KEY` is not set, so it never accepts requests without a real key.
 - 🚦 **Rate limiting (recommended):** A single shared key has no per-user limit. For public use, add [Cloudflare Rate Limiting](https://developers.cloudflare.com/waf/rate-limiting-rules/) or a KV/Durable Object counter to protect your quota from abuse.
+
+---
+
+## 🙏 Credits
+Based on the original open-source project by [saurav-z](https://github.com/saurav-z/free-image-generation-api), used and modified under the MIT License.
 
 ---
 
