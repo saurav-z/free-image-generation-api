@@ -74,6 +74,23 @@ This project lets you deploy your own **free AI image generation API** using Clo
 
 ---
 
+## 🧰 Alternative: Deploy with Wrangler (one command)
+
+Prefer the terminal? This repo includes a `wrangler.toml`, so you can deploy without the dashboard steps above.
+
+```bash
+npm install -g wrangler        # install the Cloudflare CLI (once)
+wrangler login                 # opens your browser — pick your account
+wrangler secret put API_KEY    # paste your secret key when prompted (kept safe)
+wrangler deploy                # deploys worker.js with the AI binding
+```
+
+- `wrangler.toml` already sets up the **Workers AI** binding (`AI`), so you don't add it by hand.
+- `API_KEY` is stored as a **secret** with `wrangler secret put` — never put it in `wrangler.toml`.
+- Change the `name` in `wrangler.toml` to rename the Worker.
+
+---
+
 ## 🎯 Usage
 
 ### 🖥️ cURL Example

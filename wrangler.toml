@@ -1,0 +1,28 @@
+# Cloudflare Workers configuration.
+#
+# Deploy steps (run from this folder):
+#   1. npm install -g wrangler
+#   2. wrangler login              # opens your browser — pick the "SG" account
+#   3. wrangler secret put API_KEY # paste your secret key when prompted
+#   4. wrangler deploy
+#
+# Change "name" below to whatever you want the Worker to be called.
+
+name = "free-image-generation-api"
+main = "worker.js"
+compatibility_date = "2026-09-02"
+
+# Serve the Worker at https://<name>.<your-subdomain>.workers.dev
+workers_dev = true
+
+# Workers AI binding. This is what env.AI.run(...) in worker.js uses.
+[ai]
+binding = "AI"
+
+# Send console.log / console.error output to Workers Logs (handy for debugging).
+[observability]
+enabled = true
+
+# NOTE: Do NOT put API_KEY here. It is a secret.
+# Set it once with:  wrangler secret put API_KEY
+# (Putting secrets in this file would commit them to git — never do that.)
