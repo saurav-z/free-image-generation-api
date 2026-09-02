@@ -7,13 +7,16 @@ const CORS_HEADERS = {
     "Access-Control-Max-Age": "86400",
 };
 
-// Model used for text-to-image generation.
-// Other options (see Cloudflare Workers AI docs):
-//   "@cf/black-forest-labs/flux-1-schnell"
-//   "@cf/bytedance/stable-diffusion-xl-lightning"
-//   "@cf/lykon/dreamshaper-8-lcm"
-//   "@cf/stabilityai/stable-diffusion-xl-base-1.0"
-const MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
+// Model used for text-to-image generation. Callers may override this with
+// the optional "model" request field, but only from this allowlist — never
+// pass an arbitrary model string to env.AI.run.
+const DEFAULT_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
+const ALLOWED_MODELS = new Set([
+    "@cf/black-forest-labs/flux-1-schnell",
+    "@cf/bytedance/stable-diffusion-xl-lightning",
+    "@cf/lykon/dreamshaper-8-lcm",
+    "@cf/stabilityai/stable-diffusion-xl-base-1.0",
+]);
 
 // Limits to protect against abuse and wasted compute.
 const MAX_PROMPT_LENGTH = 2048;
@@ -68,19 +71,41 @@ export default {
             if (options.error) return json({ error: options.error }, 400);
             const inputs = { prompt: prompt.trim(), ...options.value };
 
+            // Optional model override, restricted to the allowlist.
+            let model = DEFAULT_MODEL;
+            if (body.model !== undefined) {
+                if (typeof body.model !== "string" || !ALLOWED_MODELS.has(body.model)) {
+                    return json(
+                        { error: `model must be one of: ${[...ALLOWED_MODELS].join(", ")}` },
+                        400
+                    );
+                }
+                model = body.model;
+            }
+
             // 💰 Cache identical requests to save AI compute and cost.
             const cache = caches.default;
-            const cacheKey = await buildCacheKey(inputs);
+            const cacheKey = await buildCacheKey(model, inputs);
             const cached = await cache.match(cacheKey);
             if (cached) return withCors(cached);
 
             // 🧠 Generate the image from the prompt.
-            const result = await env.AI.run(MODEL, inputs);
+            const result = await env.AI.run(model, inputs);
 
-            const response = new Response(result, {
+            // Most models return a binary image stream, but flux-1-schnell
+            // returns { image: "<base64>" } (as a JPEG) instead.
+            let imageBody = result;
+            let contentType = "image/png";
+            if (result && typeof result === "object" && typeof result.image === "string") {
+                const binary = atob(result.image);
+                imageBody = Uint8Array.from(binary, (c) => c.codePointAt(0));
+                contentType = "image/jpeg";
+            }
+
+            const response = new Response(imageBody, {
                 headers: {
                     ...CORS_HEADERS,
-                    "Content-Type": "image/png",
+                    "Content-Type": contentType,
                     "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS}`,
                 },
             });
@@ -138,8 +163,8 @@ function buildOptions(body) {
 }
 
 // 🔑 Build a stable GET-based cache key from the request inputs.
-async function buildCacheKey(inputs) {
-    const data = JSON.stringify({ model: MODEL, inputs });
+async function buildCacheKey(model, inputs) {
+    const data = JSON.stringify({ model, inputs });
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(data));
     const hash = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
     return new Request(`https://image-cache.internal/${hash}`, { method: "GET" });

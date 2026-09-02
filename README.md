@@ -158,12 +158,25 @@ Besides `prompt`, the API accepts these optional fields (validated by the Worker
 | `negative_prompt` | string | up to 2048 chars | Things to avoid in the image |
 | `width` | integer | 256–2048 | Image width in pixels |
 | `height` | integer | 256–2048 | Image height in pixels |
-| `num_steps` | integer | 1–20 | Denoising steps (higher = slower) |
+| `num_steps` | integer | 1–20 | Denoising steps (higher = slower); ignored by `flux-1-schnell` |
 | `seed` | integer | ≥ 0 | Fixed seed for repeatable results |
+| `model` | string | one of the models below | Which Workers AI model generates the image (default: `stable-diffusion-xl-base-1.0`) |
+
+Allowed `model` values:
+- `@cf/stabilityai/stable-diffusion-xl-base-1.0` (default)
+- `@cf/black-forest-labs/flux-1-schnell`
+- `@cf/bytedance/stable-diffusion-xl-lightning`
+- `@cf/lykon/dreamshaper-8-lcm`
 
 ```json
 { "prompt": "A red fox in snow", "negative_prompt": "blurry", "num_steps": 12, "seed": 42 }
 ```
+
+```json
+{ "prompt": "A cyberpunk lizard", "model": "@cf/black-forest-labs/flux-1-schnell" }
+```
+
+Note: `flux-1-schnell` returns a JPEG image instead of PNG; the Worker sets `Content-Type` accordingly.
 
 ---
 
