@@ -82,7 +82,7 @@ curl -X POST https://<your-worker-name>.<your-subdomain>.workers.dev \
   -H "Authorization: Bearer your-secret-api-key" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "A cute robot cooking breakfast"}' \
-  --output image.jpg
+  --output image.png
 ```
 
 ### 🌐 JavaScript Example
@@ -104,10 +104,31 @@ document.body.appendChild(img);
 
 ---
 
+## ⚙️ Optional Request Parameters
+Besides `prompt`, the API accepts these optional fields (validated by the Worker):
+
+| Field | Type | Range | Description |
+|-------|------|-------|-------------|
+| `negative_prompt` | string | up to 2048 chars | Things to avoid in the image |
+| `width` | integer | 256–2048 | Image width in pixels |
+| `height` | integer | 256–2048 | Image height in pixels |
+| `num_steps` | integer | 1–20 | Denoising steps (higher = slower) |
+| `seed` | integer | ≥ 0 | Fixed seed for repeatable results |
+
+```json
+{ "prompt": "A red fox in snow", "negative_prompt": "blurry", "num_steps": 12, "seed": 42 }
+```
+
+---
+
 ## 📝 Notes
 - 🆓 **Free Tier:** Cloudflare Workers AI free tier allows 100,000 AI requests per day. See [Cloudflare pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/) for details.
-- 🎨 **Models:** You can change the model in `worker.js` to use other available models (see comments in the file).
-- 🔒 **Security:** Keep your API key secret. Rotate it if needed.
+- 🎨 **Models:** You can change the `MODEL` value in `worker.js` to use other available models (see comments in the file). The response is a PNG image.
+- 💰 **Caching:** Identical requests are cached for 1 day using the Cloudflare Cache API. Repeat prompts return instantly and do **not** use your daily AI quota.
+- 🌐 **CORS:** The Worker sends CORS headers and handles preflight requests, so it works from a browser (like `frontend_demo.html`).
+- ✅ **Validation:** The Worker checks the API key, the request method, and every input before calling the AI model.
+- 🔒 **Security:** Keep your API key secret and rotate it if needed. The Worker refuses to run (`500 Server not configured`) if `API_KEY` is not set, so it never accepts requests without a real key.
+- 🚦 **Rate limiting (recommended):** A single shared key has no per-user limit. For public use, add [Cloudflare Rate Limiting](https://developers.cloudflare.com/waf/rate-limiting-rules/) or a KV/Durable Object counter to protect your quota from abuse.
 
 ---
 
